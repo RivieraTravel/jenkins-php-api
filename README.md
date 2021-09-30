@@ -16,7 +16,7 @@ curl -sS https://getcomposer.org/installer | php
 Then, run the Composer command to install the latest version:
 
 ```bash
-composer.phar require jenkins-khan/jenkins-api
+composer.phar require rivieratravel/jenkins-api
 ```
 
 
