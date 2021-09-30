@@ -11,12 +11,6 @@ use Psr\Http\Message\ResponseInterface;
 
 class Jenkins
 {
-
-    /**
-     * @var string
-     */
-    private $baseUrl;
-
     private $client;
 
     /**
@@ -55,10 +49,9 @@ class Jenkins
     /**
      * @param string $baseUrl
      */
-    public function __construct(ClientInterface $client, $baseUrl)
+    public function __construct(ClientInterface $client)
     {
         $this->client = $client;
-        $this->baseUrl = $baseUrl;
     }
 
 
@@ -112,7 +105,7 @@ class Jenkins
 
     public function requestCrumb()
     {
-        $url = sprintf('%s/crumbIssuer/api/json', $this->baseUrl);
+        $url = 'crumbIssuer/api/json';
 
         $request = new Request(
             'GET',
@@ -146,7 +139,7 @@ class Jenkins
     {
         $request = new Request(
             'GET',
-            $this->baseUrl . '/api/json'
+            'api/json'
         );
 
         $options = $this->createHttpClientOption();
@@ -185,14 +178,14 @@ class Jenkins
 
         $request = new Request(
             'GET',
-            $this->baseUrl . '/api/json'
+            'api/json'
         );
 
         $options = $this->createHttpClientOption();
 
         $response = $this->client->send($request, $options);
 
-        $this->validateResponse($response, sprintf('Error during getting list of jobs on %s', $this->baseUrl));
+        $this->validateResponse($response, sprintf('Error during getting list of jobs on %s', $this->getUrl()));
 
         $this->jenkins = json_decode($response->getBody());
         if (!$this->jenkins instanceof \stdClass) {
@@ -245,7 +238,7 @@ class Jenkins
 
         $executors = array();
         for ($i = 0; $i < $this->jenkins->numExecutors; $i++) {
-            $url  = sprintf('%s/computer/%s/executors/%s/api/json', $this->baseUrl, $computer, $i);
+            $url  = sprintf('computer/%s/executors/%s/api/json', $computer, $i);
             $request = new Request(
                 'GET',
                 $url
@@ -257,7 +250,7 @@ class Jenkins
 
             $this->validateResponse(
                 $response,
-                sprintf( 'Error during getting information for executors[%s@%s] on %s', $i, $computer, $this->baseUrl)
+                sprintf( 'Error during getting information for executors[%s@%s] on %s', $i, $computer, $this->getUrl())
             );
 
             $infos = json_decode($response->getBody());
@@ -282,9 +275,9 @@ class Jenkins
     public function launchJob($jobName, $parameters = array())
     {
         if (0 === count($parameters)) {
-            $url = sprintf('%s/job/%s/build', $this->baseUrl, $jobName);
+            $url = sprintf('job/%s/build', $jobName);
         } else {
-            $url = sprintf('%s/job/%s/buildWithParameters', $this->baseUrl, $jobName);
+            $url = sprintf('job/%s/buildWithParameters', $jobName);
         }
 
         $headers = array();
@@ -323,7 +316,7 @@ class Jenkins
      */
     public function getJob($jobName)
     {
-        $url  = sprintf('%s/job/%s/api/json', $this->baseUrl, $jobName);
+        $url  = sprintf('job/%s/api/json', $jobName);
         $request = new Request(
             'GET',
             $url
@@ -337,7 +330,7 @@ class Jenkins
 
         $this->validateResponse(
             $response,
-            sprintf('Error during getting information for job %s on %s', $jobName, $this->baseUrl)
+            sprintf('Error during getting information for job %s on %s', $jobName, $this->getUrl())
         );
 
         $infos = json_decode($response->getBody());
@@ -362,7 +355,7 @@ class Jenkins
      */
     public function deleteJob($jobName)
     {
-        $url  = sprintf('%s/job/%s/doDelete', $this->baseUrl, $jobName);
+        $url  = sprintf('job/%s/doDelete', $jobName);
 
       $headers = array();
 
@@ -383,7 +376,7 @@ class Jenkins
 
         $this->validateResponse(
             $response,
-            sprintf('Error deleting job %s on %s', $jobName, $this->baseUrl)
+            sprintf('Error deleting job %s on %s', $jobName, $this->getUrl())
         );
     }
 
@@ -393,7 +386,7 @@ class Jenkins
      */
     public function getQueue()
     {
-        $url  = sprintf('%s/queue/api/json', $this->baseUrl);
+        $url  = 'queue/api/json';
         $request = new Request(
             'GET',
             $url
@@ -405,7 +398,7 @@ class Jenkins
 
         $this->validateResponse(
             $response,
-            sprintf('Error during getting information for queue on %s', $this->baseUrl)
+            sprintf('Error during getting information for queue on %s', $this->getUrl())
         );
 
         $infos = json_decode($response->getBody());
@@ -456,7 +449,7 @@ class Jenkins
      */
     public function getView($viewName)
     {
-        $url  = sprintf('%s/view/%s/api/json', $this->baseUrl, rawurlencode($viewName));
+        $url  = sprintf('view/%s/api/json', rawurlencode($viewName));
         $request = new Request(
             'GET',
             $url
@@ -468,7 +461,7 @@ class Jenkins
 
         $this->validateResponse(
             $response,
-            sprintf('Error during getting information for view %s on %s', $viewName, $this->baseUrl)
+            sprintf('Error during getting information for view %s on %s', $viewName, $this->getUrl())
         );
 
         $infos = json_decode($response->getBody());
@@ -494,7 +487,7 @@ class Jenkins
         if ($tree !== null) {
             $tree = sprintf('?tree=%s', $tree);
         }
-        $url  = sprintf('%s/job/%s/%d/api/json%s', $this->baseUrl, $job, $buildId, $tree);
+        $url  = sprintf('job/%s/%d/api/json%s', $job, $buildId, $tree);
         $request = new Request(
             'GET',
             $url
@@ -506,7 +499,7 @@ class Jenkins
 
         $this->validateResponse(
             $response,
-            sprintf('Error during getting information for build %s#%d on %s', $job, $buildId, $this->baseUrl)
+            sprintf('Error during getting information for build %s#%d on %s', $job, $buildId, $this->getUrl())
         );
 
         $infos = json_decode($response->getBody());
@@ -527,7 +520,7 @@ class Jenkins
     {
         return (null === $buildId) ?
             $this->getUrlJob($job)
-            : sprintf('%s/job/%s/%d', $this->baseUrl, $job, $buildId);
+            : sprintf('/job/%s/%d', $job, $buildId);
     }
 
     /**
@@ -538,7 +531,7 @@ class Jenkins
      */
     public function getComputer($computerName)
     {
-        $url  = sprintf('%s/computer/%s/api/json', $this->baseUrl, $computerName);
+        $url  = sprintf('computer/%s/api/json',  $computerName);
         $request = new Request(
             'GET',
             $url
@@ -550,7 +543,7 @@ class Jenkins
 
         $this->validateResponse(
             $response,
-            sprintf('Error during getting information for computer %s on %s', $computerName, $this->baseUrl)
+            sprintf('Error during getting information for computer %s on %s', $computerName, $this->getUrl())
         );
 
         $infos = json_decode($response->getBody());
@@ -567,7 +560,7 @@ class Jenkins
      */
     public function getUrl()
     {
-        return $this->baseUrl;
+        return $this->client->getConfig()['base_uri'];
     }
 
     /**
@@ -577,7 +570,7 @@ class Jenkins
      */
     public function getUrlJob($job)
     {
-        return sprintf('%s/job/%s', $this->baseUrl, $job);
+        return sprintf('/job/%s', $job);
     }
 
     /**
@@ -589,7 +582,7 @@ class Jenkins
      */
     public function getUrlView($view)
     {
-        return sprintf('%s/view/%s', $this->baseUrl, $view);
+        return sprintf('/view/%s', $view);
     }
 
     /**
@@ -625,7 +618,7 @@ class Jenkins
      */
     public function createJob($jobname, $xmlConfiguration)
     {
-        $url  = sprintf('%s/createItem?name=%s', $this->baseUrl, $jobname);
+        $url  = sprintf('createItem?name=%s', $jobname);
 
         $headers = array('Content-Type: text/xml');
 
@@ -665,7 +658,7 @@ class Jenkins
      */
     public function setJobConfig($jobname, $configuration)
     {
-        $url  = sprintf('%s/job/%s/config.xml', $this->baseUrl, $jobname);
+        $url  = sprintf('job/%s/config.xml', $jobname);
         $headers = array('Content-Type: text/xml');
 
         if ($this->areCrumbsEnabled()) {
@@ -696,7 +689,7 @@ class Jenkins
      */
     public function getJobConfig($jobname)
     {
-        $url  = sprintf('%s/job/%s/config.xml', $this->baseUrl, $jobname);
+        $url  = sprintf('job/%s/config.xml', $jobname);
         $request = new Request(
             'GET',
             $url
@@ -722,7 +715,7 @@ class Jenkins
     public function stopExecutor(Jenkins\Executor $executor)
     {
         $url = sprintf(
-            '%s/computer/%s/executors/%s/stop', $this->baseUrl, $executor->getComputer(), $executor->getNumber()
+            'computer/%s/executors/%s/stop', $executor->getComputer(), $executor->getNumber()
         );
         $headers = array();
 
@@ -754,7 +747,7 @@ class Jenkins
      */
     public function cancelQueue(Jenkins\JobQueue $queue)
     {
-        $url = sprintf('%s/queue/item/%s/cancelQueue', $this->baseUrl, $queue->getId());
+        $url = sprintf('queue/item/%s/cancelQueue', $queue->getId());
         $headers = array();
 
         if ($this->areCrumbsEnabled()) {
@@ -785,7 +778,7 @@ class Jenkins
      */
     public function toggleOfflineComputer($computerName)
     {
-        $url  = sprintf('%s/computer/%s/toggleOffline', $this->baseUrl, $computerName);
+        $url  = sprintf('computer/%s/toggleOffline', $computerName);
         $headers = array();
 
         if ($this->areCrumbsEnabled()) {
@@ -816,7 +809,7 @@ class Jenkins
      */
     public function deleteComputer($computerName)
     {
-        $url  = sprintf('%s/computer/%s/doDelete', $this->baseUrl, $computerName);
+        $url  = sprintf('computer/%s/doDelete', $computerName);
         $headers = array();
 
         if ($this->areCrumbsEnabled()) {
@@ -849,7 +842,7 @@ class Jenkins
      */
     public function getConsoleTextBuild($jobname, $buildNumber)
     {
-        $url  = sprintf('%s/job/%s/%s/consoleText', $this->baseUrl, $jobname, $buildNumber);
+        $url  = sprintf('job/%s/%s/consoleText', $jobname, $buildNumber);
         $request = new Request(
             'GET',
             $url
@@ -876,7 +869,7 @@ class Jenkins
      */
     public function getTestReport($jobName, $buildId)
     {
-        $url  = sprintf('%s/job/%s/%d/testReport/api/json', $this->baseUrl, $jobName, $buildId);
+        $url  = sprintf('job/%s/%d/testReport/api/json', $jobName, $buildId);
         $request = new Request(
             'GET',
             $url
@@ -888,7 +881,7 @@ class Jenkins
 
         $this->validateResponse(
             $response,
-            sprintf('Error during getting information for build %s#%d on %s', $jobName, $buildId, $this->baseUrl)
+            sprintf('Error during getting information for build %s#%d on %s', $jobName, $buildId, $this->getUrl())
         );
 
         $infos = json_decode($response->getBody());
@@ -909,14 +902,11 @@ class Jenkins
      *
      * @return string
      */
-    public function execute($uri, array $curlOptions)
+    public function execute($uri)
     {
-        $url  = $this->baseUrl . '/' . $uri;
-
-
         $request = new Request(
             'GET',
-            $url
+            $uri
         );
 
         $options = $this->createHttpClientOption();
@@ -936,9 +926,7 @@ class Jenkins
     public function getComputers()
     {
         $return = $this->execute(
-            '/computer/api/json', array(
-                \CURLOPT_RETURNTRANSFER => 1,
-            )
+            'computer/api/json'
         );
         $infos  = json_decode($return);
         if (!$infos instanceof \stdClass) {
@@ -959,7 +947,7 @@ class Jenkins
      */
     public function getComputerConfiguration($computerName)
     {
-        return $this->execute(sprintf('/computer/%s/config.xml', $computerName), array(\CURLOPT_RETURNTRANSFER => 1,));
+        return $this->execute(sprintf('computer/%s/config.xml', $computerName));
     }
 
     private function validateResponse(ResponseInterface $response, $errorMessage) {
